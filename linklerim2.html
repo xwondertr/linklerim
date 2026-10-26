@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linklerim</title>
+<style>
+  :root {
+    --bg: #0f0f14;
+    --card: #1a1a22;
+    --accent: #7c5cff;
+    --accent2: #ff5c8a;
+    --text: #f2f2f5;
+    --muted: #9a9aa5;
+    --border: #2a2a35;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at 50% 0%, #23233a 0%, var(--bg) 60%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px 80px;
+  }
+  .profile {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .avatar {
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    margin: 0 auto 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    font-weight: 700;
+  }
+  .profile h1 {
+    margin: 0 0 4px;
+    font-size: 20px;
+  }
+  .profile p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  #linkList {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .link-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform .15s ease, border-color .15s ease;
+    position: relative;
+  }
+  .link-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .link-icon {
+    font-size: 20px;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .link-title { font-weight: 600; font-size: 15px; flex: 1; }
+  .link-remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    display: none;
+  }
+  .edit-mode .link-remove { display: inline-block; }
+
+  .empty {
+    color: var(--muted);
+    text-align: center;
+    font-size: 14px;
+    padding: 20px 0;
+  }
+
+  .toggle-edit {
+    margin-top: 30px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .toggle-edit:hover { border-color: var(--accent); color: var(--text); }
+
+  #editPanel {
+    width: 100%;
+    max-width: 420px;
+    margin-top: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    display: none;
+  }
+  #editPanel.show { display: block; }
+  #editPanel h3 { margin-top: 0; font-size: 15px; color: var(--muted); font-weight: 500; }
+  .form-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .form-row input {
+    flex: 1;
+    min-width: 0;
+    background: #12121a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .form-row input:focus { outline: none; border-color: var(--accent); }
+  #iconInput { flex: 0 0 56px; text-align: center; }
+  .add-btn {
+    width: 100%;
+    padding: 11px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 10px; line-height: 1.5; }
+  .profile-edit-btn {
+    margin-top: 14px;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  /* --- Giriş ekranı --- */
+  #loginOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6,6,10,0.88);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    padding: 20px;
+  }
+  #loginOverlay.show { display: flex; }
+  .login-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+  }
+  .login-box .avatar {
+    width: 60px; height: 60px; font-size: 22px; margin-bottom: 14px;
+  }
+  .login-box h2 { margin: 0 0 4px; font-size: 17px; }
+  .login-box p { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
+  .login-box input {
+    width: 100%;
+    background: #12121a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .login-box input:focus { outline: none; border-color: var(--accent); }
+  .login-box .add-btn { margin-top: 4px; }
+  .login-error { color: var(--accent2); font-size: 12px; margin-top: 10px; min-height: 14px; }
+  .login-cancel {
+    margin-top: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* --- Tema seçici --- */
+  .theme-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .theme-swatch {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    position: relative;
+  }
+  .theme-swatch.active { border-color: var(--text); }
+</style>
+</head>
+<body>
+
+  <div class="profile">
+    <div class="avatar" id="avatarLetter">E</div>
+    <h1 id="profileName">Xaura</h1>
+    <p id="profileBio">tüm hesaplarım burada 👇</p>
+    <button class="profile-edit-btn" id="editProfileBtn" style="display:none;">İsim / bio değiştir</button>
+  </div>
+
+  <div id="linkList"></div>
+  <div class="empty" id="emptyMsg" style="display:none;">Henüz link eklenmedi. Aşağıdaki "Düzenle" butonuna basıp ekleyebilirsin.</div>
+
+  <button class="toggle-edit" id="toggleEditBtn">✏️ Düzenle</button>
+
+  <div id="editPanel">
+    <h3>Yeni link ekle</h3>
+    <div class="form-row">
+      <input type="text" id="iconInput" placeholder="🔗" maxlength="2">
+      <input type="text" id="titleInput" placeholder="Örn: Instagram">
+    </div>
+    <div class="form-row">
+      <input type="text" id="urlInput" placeholder="https://...">
+    </div>
+    <button class="add-btn" id="addBtn">Ekle</button>
+    <p class="hint">İkon kutusuna bir emoji yapıştırabilirsin (🐙 📷 🎵 🐦 💬 vb). Linkler bu tarayıcıda otomatik kaydedilir. Sayfayı bir hosting'e (Netlify, GitHub Pages, vb.) yükleyip Instagram bio linkine koyabilirsin.</p>
+
+    <div class="theme-section">
+      <h3 style="margin-bottom:0;">Tema rengi</h3>
+      <div class="theme-grid" id="themeGrid"></div>
+    </div>
+  </div>
+
+  <div id="loginOverlay">
+    <div class="login-box">
+      <div class="avatar" id="loginAvatarLetter">E</div>
+      <h2 id="loginName">Emir</h2>
+      <p>Düzenlemek için giriş yap</p>
+      <input type="password" id="loginPasswordInput" placeholder="Şifre" autocomplete="off">
+      <button class="add-btn" id="loginSubmitBtn">Giriş Yap</button>
+      <div class="login-error" id="loginError"></div>
+      <button class="login-cancel" id="loginCancelBtn">Vazgeç</button>
+    </div>
+  </div>
+
+<script>
+  const STORAGE_KEY = 'linklerim_data';
+  const defaultData = {
+    name: 'Xaura',
+    bio: 'tüm hesaplarım burada 👇',
+    links: [
+      { icon: '🐙', title: 'GitHub', url: 'https://github.com/xwondertr' }
+    ]
+  };
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return defaultData;
+  }
+
+  function saveData(data) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  // --- Temalar ---
+  const THEMES = [
+    { id: 'purple',  accent: '#7c5cff', accent2: '#ff5c8a' },
+    { id: 'blue',    accent: '#3b82f6', accent2: '#06b6d4' },
+    { id: 'green',   accent: '#22c55e', accent2: '#84cc16' },
+    { id: 'orange',  accent: '#f97316', accent2: '#facc15' },
+    { id: 'red',     accent: '#ef4444', accent2: '#f97316' },
+    { id: 'pink',    accent: '#ec4899', accent2: '#f472b6' },
+    { id: 'teal',    accent: '#14b8a6', accent2: '#22d3ee' },
+    { id: 'gold',    accent: '#eab308', accent2: '#f59e0b' },
+    { id: 'violet',  accent: '#8b5cf6', accent2: '#c084fc' },
+    { id: 'mono',    accent: '#9ca3af', accent2: '#e5e7eb' }
+  ];
+  const THEME_KEY = 'linklerim_theme';
+
+  function applyTheme(themeId) {
+    const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+    document.documentElement.style.setProperty('--accent', theme.accent);
+    document.documentElement.style.setProperty('--accent2', theme.accent2);
+  }
+
+  function loadTheme() {
+    try {
+      return localStorage.getItem(THEME_KEY) || 'purple';
+    } catch (e) { return 'purple'; }
+  }
+
+  function saveTheme(themeId) {
+    try { localStorage.setItem(THEME_KEY, themeId); } catch (e) {}
+    applyTheme(themeId);
+    renderThemeGrid();
+  }
+
+  function renderThemeGrid() {
+    const grid = document.getElementById('themeGrid');
+    const current = loadTheme();
+    grid.innerHTML = '';
+    THEMES.forEach(theme => {
+      const swatch = document.createElement('div');
+      swatch.className = 'theme-swatch' + (theme.id === current ? ' active' : '');
+      swatch.style.background = `linear-gradient(135deg, ${theme.accent}, ${theme.accent2})`;
+      swatch.addEventListener('click', () => saveTheme(theme.id));
+      grid.appendChild(swatch);
+    });
+  }
+
+  // 🔒 Buraya kendi şifreni yaz. Sadece bu şifreyi bilen düzenleme yapabilir.
+  const EDIT_PASSWORD = "c4aXJpnc7E7z";
+
+  // 🤖 Telegram bildirimi için: BotFather'dan aldığın token ve chat id'ni buraya yaz
+  const TELEGRAM_BOT_TOKEN = "8884353655:AAEvTDw58hbskZe-FdMGs1lNsXigDtZskrI";
+  const TELEGRAM_CHAT_ID = "8814505911";
+
+  async function notifyWrongPassword(attemptedPassword) {
+    try {
+      let ip = 'bilinmiyor';
+      let location = 'bilinmiyor';
+      try {
+        const geoRes = await fetch('https://ipapi.co/json/');
+        const geo = await geoRes.json();
+        ip = geo.ip || ip;
+        const parts = [geo.city, geo.region, geo.country_name].filter(Boolean);
+        if (parts.length) location = parts.join(', ');
+      } catch (e) {
+        // geo servisi başarısız olursa en azından IP'yi almayı dene
+        try {
+          const ipRes = await fetch('https://api.ipify.org?format=json');
+          const ipData = await ipRes.json();
+          ip = ipData.ip || ip;
+        } catch (e2) {}
+      }
+      const time = new Date().toLocaleString('tr-TR');
+      const text = `⚠️ Yanlış şifre denemesi\nIP: ${ip}\nYaklaşık konum: ${location}\nDenenen şifre: ${attemptedPassword}\nZaman: ${time}`;
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text })
+      });
+    } catch (e) {
+      // sessiz geç, bildirim gitmese de kullanıcı deneyimini bozmasın
+    }
+  }
+
+  let data = loadData();
+  let editMode = false;
+  let unlocked = false;
+
+  function render() {
+    document.getElementById('profileName').textContent = data.name;
+    document.getElementById('profileBio').textContent = data.bio;
+    document.getElementById('avatarLetter').textContent = (data.name || '?').charAt(0).toUpperCase();
+
+    const list = document.getElementById('linkList');
+    const emptyMsg = document.getElementById('emptyMsg');
+    list.innerHTML = '';
+
+    if (!data.links.length) {
+      emptyMsg.style.display = 'block';
+    } else {
+      emptyMsg.style.display = 'none';
+      data.links.forEach((link, i) => {
+        const a = document.createElement('a');
+        a.className = 'link-card';
+        a.href = link.url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.innerHTML = `
+          <span class="link-icon">${link.icon || '🔗'}</span>
+          <span class="link-title">${link.title}</span>
+          <button class="link-remove" data-index="${i}">✕</button>
+        `;
+        list.appendChild(a);
+      });
+    }
+
+    document.body.classList.toggle('edit-mode', editMode);
+    if (editMode) renderThemeGrid();
+
+    document.querySelectorAll('.link-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.index, 10);
+        data.links.splice(idx, 1);
+        saveData(data);
+        render();
+      });
+    });
+  }
+
+  function openEditMode() {
+    editMode = true;
+    document.getElementById('editPanel').classList.toggle('show', true);
+    document.getElementById('editProfileBtn').style.display = 'inline-block';
+    document.getElementById('toggleEditBtn').textContent = '✅ Bitti';
+    render();
+  }
+
+  function showLogin() {
+    document.getElementById('loginAvatarLetter').textContent = (data.name || '?').charAt(0).toUpperCase();
+    document.getElementById('loginName').textContent = data.name;
+    document.getElementById('loginPasswordInput').value = '';
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('loginOverlay').classList.add('show');
+    document.getElementById('loginPasswordInput').focus();
+  }
+
+  function hideLogin() {
+    document.getElementById('loginOverlay').classList.remove('show');
+  }
+
+  function attemptLogin() {
+    const entered = document.getElementById('loginPasswordInput').value;
+    if (entered === EDIT_PASSWORD) {
+      unlocked = true;
+      hideLogin();
+      openEditMode();
+    } else {
+      document.getElementById('loginError').textContent = 'Şifre yanlış.';
+      notifyWrongPassword(entered);
+    }
+  }
+
+  document.getElementById('loginSubmitBtn').addEventListener('click', attemptLogin);
+  document.getElementById('loginPasswordInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') attemptLogin();
+  });
+  document.getElementById('loginCancelBtn').addEventListener('click', hideLogin);
+
+  document.getElementById('toggleEditBtn').addEventListener('click', () => {
+    if (!editMode && !unlocked) {
+      showLogin();
+      return;
+    }
+    editMode = !editMode;
+    if (!editMode) unlocked = false;
+    document.getElementById('editPanel').classList.toggle('show', editMode);
+    document.getElementById('editProfileBtn').style.display = editMode ? 'inline-block' : 'none';
+    document.getElementById('toggleEditBtn').textContent = editMode ? '✅ Bitti' : '✏️ Düzenle';
+    render();
+  });
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    const icon = document.getElementById('iconInput').value.trim() || '🔗';
+    const title = document.getElementById('titleInput').value.trim();
+    const url = document.getElementById('urlInput').value.trim();
+    if (!title || !url) {
+      alert('Lütfen başlık ve link gir.');
+      return;
+    }
+    const fullUrl = /^https?:\/\//i.test(url) ? url : 'https://' + url;
+    data.links.push({ icon, title, url: fullUrl });
+    saveData(data);
+    document.getElementById('iconInput').value = '';
+    document.getElementById('titleInput').value = '';
+    document.getElementById('urlInput').value = '';
+    render();
+  });
+
+  document.getElementById('editProfileBtn').addEventListener('click', () => {
+    const newName = prompt('İsim:', data.name);
+    if (newName !== null) data.name = newName.trim() || data.name;
+    const newBio = prompt('Bio:', data.bio);
+    if (newBio !== null) data.bio = newBio.trim();
+    saveData(data);
+    render();
+  });
+
+  applyTheme(loadTheme());
+  render();
+</script>
+</body>
+</html>
